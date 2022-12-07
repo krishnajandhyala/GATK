@@ -3,7 +3,7 @@
 ## Enter Data directory
 cd /home/ccmb/Krishna_Projects/Test_GATK4  ##1
 REF='/home/ccmb/Krishna_Projects/ref' ##2  ## The reference directory should contain all the reference files including the snp databases.
-GATK4='/home/ccmb/Programs/gatk-4.2.0.0' ##3
+GATK4='/home/ccmb/Programs/gatk-4.3.0.0' ##3
 BED='/home/ccmb/Krishna_Projects/truseq-exome-targeted-regions-manifest-v1-2.bed' ##4
 
 ## Reading files in folder
@@ -28,27 +28,27 @@ date
 
 ## 1. FastqToSam Start
 echo "############################################ FastqToSam Start ############################################"
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar FastqToSam -F1 *_R1_001.fastq.gz -F2 *_R2_001.fastq.gz -O unmapped.bam -RG H0164.2 -SM ${line} -LB Solexa-272222 -PU H0164ALXX140820.2 -PL ILLUMINA
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar FastqToSam -F1 *_R1_001.fastq.gz -F2 *_R2_001.fastq.gz -O unmapped.bam -RG H0164.2 -SM ${line} -LB Solexa-272222 -PU H0164ALXX140820.2 -PL ILLUMINA
 echo "############################################# FastqToSam End #############################################"
 
 ## 2. Adapter Marking Start
 echo "############################################ Adapter Marking Start ############################################"  
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar MarkIlluminaAdapters -I unmapped.bam -O unmapped_markilluminaadapters.bam -M unmapped_markilluminaadapters_metrics.txt
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar MarkIlluminaAdapters -I unmapped.bam -O unmapped_markilluminaadapters.bam -M unmapped_markilluminaadapters_metrics.txt
 echo "############################################# Adapter Marking End #############################################"
 
 ## 3. Sam To Fastq Start
 echo "############################################ Sam To Fastq Start ############################################" 
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar SamToFastq -I unmapped_markilluminaadapters.bam --FASTQ unmapped_markilluminaadaptors_R1.fastq.gz --SECOND_END_FASTQ unmapped_markilluminaadaptors_R2.fastq.gz -CLIP_ATTR XT -CLIP_ACT 2 -NON_PF true
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar SamToFastq -I unmapped_markilluminaadapters.bam --FASTQ unmapped_markilluminaadaptors_R1.fastq.gz --SECOND_END_FASTQ unmapped_markilluminaadaptors_R2.fastq.gz -CLIP_ATTR XT -CLIP_ACT 2 -NON_PF true
 echo "############################################# Sam To Fastq End #############################################"
 
 ## 4. Bwa Alignment
 echo "############################################ Bwa Alignment Start ############################################"  
-bwa mem -t 3 -M $REF/ucsc.hg19.fasta unmapped_markilluminaadaptors_R1.fastq.gz unmapped_markilluminaadaptors_R2.fastq.gz -o Alignment.sam
+bwa mem -t 80 -M $REF/ucsc.hg19.fasta unmapped_markilluminaadaptors_R1.fastq.gz unmapped_markilluminaadaptors_R2.fastq.gz -o Alignment.sam
 echo "############################################# Bwa Alignment End #############################################"
 
 ## 5. Sorting & BAM conversion
 echo "############################################ Sorting & BAM conversion Start ############################################"
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar SortSam -I Alignment.sam -O Sorted_Alignment.bam -SO coordinate
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar SortSam -I Alignment.sam -O Sorted_Alignment.bam -SO coordinate
 echo "############################################# Sorting & BAM conversion End #############################################"
 
 ## 6. Alignment stats with Samtools
@@ -58,71 +58,71 @@ echo "############################################# Alignment stats with Samtool
 
 ## 7. Merge BAM Start #Ref should have Seq dictionary (i.e Reference.dict file) and .fai file
 echo "############################################ Merge BAM Start ############################################" 
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar MergeBamAlignment -ALIGNED Sorted_Alignment.bam -UNMAPPED unmapped.bam -O Mapped.bam -R $REF/ucsc.hg19.fasta -MC true --CLIP_ADAPTERS false --CLIP_OVERLAPPING_READS true --INCLUDE_SECONDARY_ALIGNMENTS true --MAX_INSERTIONS_OR_DELETIONS -1 --PRIMARY_ALIGNMENT_STRATEGY MostDistant --ATTRIBUTES_TO_RETAIN XS
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar MergeBamAlignment -ALIGNED Sorted_Alignment.bam -UNMAPPED unmapped.bam -O Mapped.bam -R $REF/ucsc.hg19.fasta -MC true --CLIP_ADAPTERS false --CLIP_OVERLAPPING_READS true --INCLUDE_SECONDARY_ALIGNMENTS true --MAX_INSERTIONS_OR_DELETIONS -1 --PRIMARY_ALIGNMENT_STRATEGY MostDistant --ATTRIBUTES_TO_RETAIN XS
 echo "############################################# Merge BAM End #############################################"
 
 ## 8. BamIndex
 echo "############################################ BamIndex Start #############################################"
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar BuildBamIndex -I Mapped.bam
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar BuildBamIndex -I Mapped.bam
 echo "############################################# BamIndex End ##############################################"
 
 ## 9. Validate Sam
 echo "############################################ Validate Sam Start #########################################"
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar ValidateSamFile -I Mapped.bam --REFERENCE_SEQUENCE $REF/ucsc.hg19.fasta -M SUMMARY -O SamValidation_metrics.txt
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar ValidateSamFile -I Mapped.bam --REFERENCE_SEQUENCE $REF/ucsc.hg19.fasta -M SUMMARY -O SamValidation_metrics.txt
 echo "############################################ Validate Sam End #########################################"
 
 ## 10. MArkDuplicate
 echo "############################################ MarkDuplicate Start ############################################"
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar MarkDuplicates -I Mapped.bam -O Markdup.bam -M Markduplicate_metrics.txt --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar MarkDuplicates -I Mapped.bam -O Markdup.bam -M Markduplicate_metrics.txt --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500
 echo "############################################# MarkDuplicate End #############################################"
 
 ## 11. BamIndex
 echo "############################################ BamIndex Start ############################################" 
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar BuildBamIndex -I Markdup.bam
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar BuildBamIndex -I Markdup.bam
 echo "############################################# BamIndex End #############################################"
 
 ## 12. BASE RECALIBERATION ###########
 ## Base Quality Score Recalibration (BQSR) 1
 echo "############################################ BQSR-1 Start ############################################" 
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar BaseRecalibrator -R $REF/ucsc.hg19.fasta -I Markdup.bam -L $BED -ip 100 --known-sites $REF/dbsnp_138.hg19_sorted.vcf --known-sites $REF/Mills_and_1000G_gold_standard.indels.hg19.sites.sorted.vcf -O recal_data.table
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar BaseRecalibrator -R $REF/ucsc.hg19.fasta -I Markdup.bam -L $BED -ip 100 --known-sites $REF/dbsnp_138.hg19_sorted.vcf --known-sites $REF/Mills_and_1000G_gold_standard.indels.hg19.sites.sorted.vcf -O recal_data.table
 echo "############################################# BQSR-1 End #############################################"
 
 ## Apply Recalibration 2
 echo "############################################ Apply Recalibration-2 Start ############################################"  
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar ApplyBQSR -bqsr recal_data.table -R $REF/ucsc.hg19.fasta -I Markdup.bam -O recal_reads.bam
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar ApplyBQSR -bqsr recal_data.table -R $REF/ucsc.hg19.fasta -I Markdup.bam -O recal_reads.bam
 echo "############################################# Apply Recalibration-2 End #############################################"
 
 ## 13. Index bam
 echo "############################################ Bam Indexing Start ############################################" 
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar BuildBamIndex -I recal_reads.bam
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar BuildBamIndex -I recal_reads.bam
 echo "############################################# Bam Indexing End #############################################"
 
 ## 14. Variant Calling
 echo "############################################ Haplotypecaller Start ############################################" 
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar HaplotypeCaller  -R $REF/ucsc.hg19.fasta -I recal_reads.bam -L $BED -ip 100 -stand-call-conf 30 -O ${line}_Raw_variants.vcf
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar HaplotypeCaller  -R $REF/ucsc.hg19.fasta -I recal_reads.bam -L $BED -ip 100 -stand-call-conf 30 -O ${line}_Raw_variants.vcf
 echo "############################################# Haplotypecaller End #############################################"
 # -ERC GVCF - Use this parameter for joint genotyping samples
 
 ## 15. Extract SNP and Idels
 echo "############################################# SNP & Indel Extraction Start #############################################"
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar SelectVariants -R $REF/ucsc.hg19.fasta -V ${line}_Raw_variants.vcf -select-type SNP -O Raw_snps.vcf
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar SelectVariants -R $REF/ucsc.hg19.fasta -V ${line}_Raw_variants.vcf -select-type SNP -O Raw_snps.vcf
 
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar SelectVariants -R $REF/ucsc.hg19.fasta -V ${line}_Raw_variants.vcf -select-type INDEL -O Raw_indels.vcf
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar SelectVariants -R $REF/ucsc.hg19.fasta -V ${line}_Raw_variants.vcf -select-type INDEL -O Raw_indels.vcf
 echo "############################################## SNP & Indel Extraction End ##############################################"
 
 ## 16.1. SNP Filtering
 echo "############################################# SNP Filtering Start #############################################"
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar VariantFiltration -R $REF/ucsc.hg19.fasta -V Raw_snps.vcf --filter-expression "QD < 2.0" --filter-name "QualityByDepth2" --filter-expression "FS > 60.0" --filter-name "FisherStrand60" --filter-expression "MQ < 40.0" --filter-name "RMSMappingQuality40" --filter-expression "MQRankSum < -12.5" --filter-name "MappingQualityRankSumTest-12.5" --filter-expression "ReadPosRankSum < -8.0" --filter-name "ReadPosRankSumTest-8" -O snps_filtered.vcf
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar VariantFiltration -R $REF/ucsc.hg19.fasta -V Raw_snps.vcf --filter-expression "QD < 2.0" --filter-name "QualityByDepth2" --filter-expression "FS > 60.0" --filter-name "FisherStrand60" --filter-expression "MQ < 40.0" --filter-name "RMSMappingQuality40" --filter-expression "MQRankSum < -12.5" --filter-name "MappingQualityRankSumTest-12.5" --filter-expression "ReadPosRankSum < -8.0" --filter-name "ReadPosRankSumTest-8" -O snps_filtered.vcf
 echo "############################################## SNP Filtering End ##############################################"
 
 ## 16.2. Indel Filtering
 echo "############################################# Indel Filtering Start #############################################"  
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar VariantFiltration -R $REF/ucsc.hg19.fasta -V Raw_indels.vcf --filter-expression "QD < 2.0" --filter-name "QualityByDepth2" --filter-expression "FS > 200.0" --filter-name "FisherStrand200" --filter-expression "ReadPosRankSum < -20.0" --filter-name "ReadPosRankSum-20" -O indels_filtered.vcf
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar VariantFiltration -R $REF/ucsc.hg19.fasta -V Raw_indels.vcf --filter-expression "QD < 2.0" --filter-name "QualityByDepth2" --filter-expression "FS > 200.0" --filter-name "FisherStrand200" --filter-expression "ReadPosRankSum < -20.0" --filter-name "ReadPosRankSum-20" -O indels_filtered.vcf
 echo "############################################## Indel Filtering End ##############################################"
 
 ## 17. Combine variants
 echo "############################################# Combine Variants Start #############################################" 
-java -Xmx12G -jar $GATK4/gatk-package-4.2.0.0-local.jar MergeVcfs -I snps_filtered.vcf -I indels_filtered.vcf -O ${line}_Final_Filtered_Variants.vcf
+java -Xmx400G -jar $GATK4/gatk-package-4.3.0.0-local.jar MergeVcfs -I snps_filtered.vcf -I indels_filtered.vcf -O ${line}_Final_Filtered_Variants.vcf
 echo "############################################## Combine Variants End ##############################################"
 
 echo "############################################# File Deletion Start #############################################" 
